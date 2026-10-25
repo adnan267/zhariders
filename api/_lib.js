@@ -27,3 +27,14 @@ function authed(req) {
   return i > 0 && eq(s.slice(0, i), user) && eq(s.slice(i + 1), pass);
 }
 module.exports = { redis, clean, STATUS, authed, crypto };
+// Telegram alert (optional). Needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID env vars.
+async function notify(text) {
+  const t = process.env.TELEGRAM_BOT_TOKEN, c = process.env.TELEGRAM_CHAT_ID;
+  if (!t || !c) return;
+  try {
+    await fetch('https://api.telegram.org/bot' + t + '/sendMessage', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: c, text }),
+      signal: AbortSignal.timeout(4000) });
+  } catch (e) { console.error('Telegram alert failed'); }
+}
+module.exports.notify = notify;

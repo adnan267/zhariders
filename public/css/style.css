@@ -56,3 +56,8 @@ footer img{height:90px;border-radius:10px}
 
 .img{background-size:cover;background-position:center}.hero{background-size:cover;background-position:center}
 .ok{color:#1a7f3c;font-weight:600}
+.lang{display:flex;gap:4px}.lang button{background:none;border:1px solid #444;color:#ddd;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12px}.lang button.on{background:var(--gold);color:#1b1405;border-color:var(--gold)}
+.stars{color:var(--gold);font-size:18px}.rv{padding:16px}.rv p{color:var(--ink)}
+body.ur,body.ar{font-family:"Noto Naskh Arabic",Tahoma,Arial,sans-serif;line-height:1.8}
+[dir=rtl] .eyebrow{letter-spacing:0}[dir=rtl] .wa{right:auto;left:18px}
+@media(max-width:520px){nav .btn{display:none}nav img{height:46px}}

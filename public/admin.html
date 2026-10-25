@@ -1,30 +1,40 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>ZHA Admin</title>
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>ZHA Admin</title>
 <style>body{font-family:system-ui,Arial;margin:0;background:#f5f1e6;color:#1b1b1f}header{background:#0b0b0d;color:#f0cf7a;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-main{padding:20px;overflow-x:auto}table{border-collapse:collapse;width:100%;background:#fff;font-size:14px}th,td{padding:10px;border-bottom:1px solid #e8e0cc;text-align:left;vertical-align:top}th{background:#fbf7ee}
-input,select,button,a.b{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:13px;text-decoration:none;color:inherit}a.wa{background:#25d366;color:#fff;border-color:#25d366}
+main{padding:20px;overflow-x:auto}table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-bottom:16px}th,td{padding:10px;border-bottom:1px solid #e8e0cc;text-align:left;vertical-align:top}th{background:#fbf7ee}
+input,select,button,a.b{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:13px;text-decoration:none;color:inherit}a.wa{background:#25d366;color:#fff;border-color:#25d366}button.on{background:#0b0b0d;color:#f0cf7a}
 #login{max-width:320px;margin:80px auto;background:#fff;padding:24px;border-radius:14px;display:grid;gap:10px}
-.s-new{background:#fff3cd}.s-confirmed{background:#d4edda}.s-cancelled{background:#f8d7da}.s-completed{background:#e2e3e5}</style></head><body>
-<header><b>ZHA Riders Makkah - Bookings</b><span id="cnt"></span></header>
+.s-new,.s-pending{background:#fff3cd}.s-confirmed,.s-approved{background:#d4edda}.s-cancelled,.s-hidden{background:#f8d7da}.s-completed{background:#e2e3e5}.add{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}</style></head><body>
+<header><b>ZHA Riders Makkah - Admin</b><span id="cnt"></span></header>
 <div id="login"><b>Admin login</b><input id="u" value="admin" autocomplete="username"><input id="p" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')go()"><button onclick="go()">Login</button><span id="err" style="color:#a33;font-size:13px"></span></div>
 <main id="app" style="display:none">
-<p><select id="f" onchange="draw()"><option value="">All</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select> <button onclick="load()">Refresh</button> <button onclick="sessionStorage.clear();location.reload()">Logout</button></p>
-<table><thead><tr><th>Ref</th><th>Received</th><th>Customer</th><th>Trip</th><th>Details</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table></main>
+<p><button id="tb" class="on" onclick="tab('b')">Bookings</button> <button id="tr" onclick="tab('r')">Reviews <span id="pc"></span></button> <button onclick="load()">Refresh</button> <button onclick="sessionStorage.clear();location.reload()">Logout</button></p>
+<div id="pb"><p><select id="f" onchange="draw()"><option value="">All</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select></p>
+<table><thead><tr><th>Ref</th><th>Received</th><th>Customer</th><th>Trip</th><th>Details</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table></div>
+<div id="pr" style="display:none"><div class="add"><input id="rn" placeholder="Name"><select id="rr"><option>5</option><option>4</option><option>3</option></select><input id="rt" placeholder="Review text (e.g. received on WhatsApp)" style="flex:1;min-width:220px"><button onclick="addRev()">Add &amp; publish</button></div>
+<table><thead><tr><th>Date</th><th>Name</th><th>Rating</th><th>Review</th><th>Status</th><th></th></tr></thead><tbody id="rv"></tbody></table></div></main>
 <script>
-var D=[],A=sessionStorage.getItem('zha');
+var A=sessionStorage.getItem('zha'),B=[],R=[];
 var E=function(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML};
 function api(path,opt){opt=opt||{};opt.headers=Object.assign({Authorization:'Basic '+A,'Content-Type':'application/json'},opt.headers||{});return fetch(path,opt)}
 function go(){A=btoa(document.getElementById('u').value+':'+document.getElementById('p').value);load(true)}
-function load(first){api('/api/admin/bookings').then(function(r){
- if(r.status===401){sessionStorage.removeItem('zha');document.getElementById('login').style.display='grid';document.getElementById('app').style.display='none';if(first)document.getElementById('err').textContent='Wrong username or password';return null}
- if(!r.ok){document.getElementById('err').textContent='Server error (is ADMIN_PASSWORD set?)';return null}
- return r.json()}).then(function(j){if(!j)return;sessionStorage.setItem('zha',A);document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';D=j;draw()})}
-function draw(){var f=document.getElementById('f').value,rows=D.filter(function(b){return!f||b.status===f});
+function tab(x){document.getElementById('pb').style.display=x==='b'?'':'none';document.getElementById('pr').style.display=x==='r'?'':'none';document.getElementById('tb').className=x==='b'?'on':'';document.getElementById('tr').className=x==='r'?'on':''}
+function load(first){Promise.all([api('/api/admin/bookings'),api('/api/admin/reviews')]).then(function(rs){
+ if(rs[0].status===401){sessionStorage.removeItem('zha');document.getElementById('login').style.display='grid';document.getElementById('app').style.display='none';if(first)document.getElementById('err').textContent='Wrong username or password';return null}
+ if(!rs[0].ok||!rs[1].ok){document.getElementById('err').textContent='Server error (are ADMIN_PASSWORD and the database set up?)';return null}
+ return Promise.all([rs[0].json(),rs[1].json()])}).then(function(j){if(!j)return;sessionStorage.setItem('zha',A);document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';B=j[0];R=j[1];draw()})}
+function sel(list,cur,fn,id){return '<select onchange="'+fn+'(\''+id+'\',this.value)">'+list.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>'}).join('')+'</select>'}
+function draw(){var f=document.getElementById('f').value,rows=B.filter(function(b){return!f||b.status===f});
 document.getElementById('cnt').textContent=rows.length+' bookings';
+var pend=R.filter(function(r){return r.status==='pending'}).length;document.getElementById('pc').textContent=pend?'('+pend+' new)':'';
 document.getElementById('t').innerHTML=rows.map(function(b){var ph=(b.phone||'').replace(/\D/g,'');
-return '<tr class="s-'+b.status+'"><td><b>'+E(b.ref)+'</b></td><td>'+new Date(b.created).toLocaleString()+'</td><td>'+E(b.name||'-')+'<br>'+E(b.phone)+'</td><td>'+E(b.pickup)+' &rarr; '+E(b.dropoff)+'<br><b>'+E(b.date)+'</b></td><td>'+E(b.passengers)+' pax, '+E(b.vehicle)+'<br><i>'+E(b.notes)+'</i></td>'
-+'<td><select onchange="setS(\''+b.id+'\',this.value)">'+['new','contacted','confirmed','completed','cancelled'].map(function(s){return '<option'+(s===b.status?' selected':'')+'>'+s+'</option>'}).join('')+'</select></td>'
-+'<td>'+(ph?'<a class="b wa" target="_blank" href="https://wa.me/'+ph+'?text='+encodeURIComponent('Assalamu Alaikum, ZHA Riders Makkah here. Regarding your booking '+b.ref+'.')+'">WhatsApp</a> ':'')+'<button onclick="del(\''+b.id+'\')">Delete</button></td></tr>'}).join('')}
+return '<tr class="s-'+b.status+'"><td><b>'+E(b.ref)+'</b></td><td>'+new Date(b.created).toLocaleString()+'</td><td>'+E(b.name||'-')+'<br>'+E(b.phone)+'</td><td>'+E(b.pickup)+' &rarr; '+E(b.dropoff)+'<br><b>'+E(b.date)+' '+E(b.time)+'</b>'+(b.trip==='return'?'<br>Return: <b>'+E(b.rdate)+' '+E(b.rtime)+'</b>':'<br>One way')+(b.flight?'<br>Flight: '+E(b.flight):'')+'</td><td>'+E(b.passengers)+' pax, '+E(b.vehicle)+'<br><i>'+E(b.notes)+'</i></td>'
++'<td>'+sel(['new','contacted','confirmed','completed','cancelled'],b.status,'setS',b.id)+'</td>'
++'<td>'+(ph?'<a class="b wa" target="_blank" href="https://wa.me/'+ph+'?text='+encodeURIComponent('Assalamu Alaikum, ZHA Riders Makkah here. Regarding your booking '+b.ref+'.')+'">WhatsApp</a> ':'')+'<button onclick="del(\''+b.id+'\')">Delete</button></td></tr>'}).join('');
+document.getElementById('rv').innerHTML=R.map(function(r){return '<tr class="s-'+r.status+'"><td>'+new Date(r.created).toLocaleDateString()+'</td><td>'+E(r.name)+'</td><td>'+'★★★★★'.slice(0,r.rating)+'</td><td>'+E(r.text)+'</td><td>'+sel(['pending','approved','hidden'],r.status,'setR',r.id)+'</td><td><button onclick="delR(\''+r.id+'\')">Delete</button></td></tr>'}).join('')}
 function setS(id,s){api('/api/admin/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:s})}).then(function(){load()})}
 function del(id){if(confirm('Delete this booking?'))api('/api/admin/bookings/'+id,{method:'DELETE'}).then(function(){load()})}
+function setR(id,s){api('/api/admin/reviews/'+id,{method:'PATCH',body:JSON.stringify({status:s})}).then(function(){load()})}
+function delR(id){if(confirm('Delete this review?'))api('/api/admin/reviews/'+id,{method:'DELETE'}).then(function(){load()})}
+function addRev(){api('/api/admin/reviews',{method:'POST',body:JSON.stringify({name:document.getElementById('rn').value,rating:document.getElementById('rr').value,text:document.getElementById('rt').value})}).then(function(r){if(r.ok){document.getElementById('rn').value='';document.getElementById('rt').value='';load()}else alert('Review text must be at least 10 characters')})}
 if(A)load();
 </script></body></html>
