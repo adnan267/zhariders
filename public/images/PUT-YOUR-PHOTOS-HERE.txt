@@ -1,0 +1,5 @@
+Copy your photos here with EXACTLY these names (jpg). Missing ones show an icon instead.
+hero.jpg                  (wide banner, ~1920x900)
+service-airport.jpg  service-umrah.jpg  service-ziyarat.jpg  service-intercity.jpg
+route-jeddah-makkah.jpg  route-makkah-madinah.jpg  route-madinah-jeddah.jpg  route-ziyarat.jpg
+fleet-sedan.jpg  fleet-van.jpg  fleet-suv.jpg  fleet-minibus.jpg   (about 800x500 each)
