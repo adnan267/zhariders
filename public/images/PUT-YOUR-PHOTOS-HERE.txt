@@ -3,3 +3,5 @@ hero.jpg                  (wide banner, ~1920x900)
 service-airport.jpg  service-umrah.jpg  service-ziyarat.jpg  service-intercity.jpg
 route-jeddah-makkah.jpg  route-makkah-madinah.jpg  route-madinah-jeddah.jpg  route-ziyarat.jpg
 fleet-sedan.jpg  fleet-van.jpg  fleet-suv.jpg  fleet-minibus.jpg   (about 800x500 each)
+ziyarat-makkah.jpg  ziyarat-madinah.jpg  ziyarat-badr.jpg   (Ziyarat Tours)
+fleet-van.jpg = Hyundai Staria,  fleet-minibus.jpg = Toyota HiAce High Roof

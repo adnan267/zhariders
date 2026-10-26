@@ -61,3 +61,17 @@ footer img{height:90px;border-radius:10px}
 body.ur,body.ar{font-family:"Noto Naskh Arabic",Tahoma,Arial,sans-serif;line-height:1.8}
 [dir=rtl] .eyebrow{letter-spacing:0}[dir=rtl] .wa{right:auto;left:18px}
 @media(max-width:520px){nav .btn{display:none}nav img{height:46px}}
+
+.ck{list-style:none;padding:0;margin:6px 0 14px;font-size:13px;color:var(--mut)}.ck li{margin-bottom:4px}.ck li:before{content:"\2713  ";color:var(--gold);font-weight:700}
+
+.tw2{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px}
+.rates{width:100%;border-collapse:collapse;min-width:620px}
+.rates th{background:#f6efd9;padding:12px 8px;text-align:center;border-bottom:2px solid var(--gold);vertical-align:top}
+.rates th b{display:block;font-size:14px}.rates th small{color:var(--mut);font-weight:400;font-size:12px}
+.rates td{padding:10px 8px;text-align:center;border-bottom:1px solid #f0ead6;font-size:14px}
+.rates th:first-child,.rates td:first-child{text-align:start;font-weight:600;padding-inline-start:14px}
+.rates tr:nth-child(even) td{background:#fbf8ee}
+.pc{display:inline-block;min-width:54px;padding:5px 10px;border-radius:8px;font-weight:800;color:#0a1a3c}
+.pc:hover{background:var(--gold);color:#1b1405}
+.rn{color:var(--mut);font-size:13px;margin-top:12px}
+.card .from,.dark .card .from{color:var(--gold);font-weight:700;margin:2px 0 0}

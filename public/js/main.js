@@ -1,8 +1,8 @@
 var WA="966540845087";
-var routes=[["Jeddah Airport","Makkah","✈️","route-jeddah-makkah"],["Makkah","Madinah","🕌","route-makkah-madinah"],["Madinah","Jeddah Airport","🛣️","route-madinah-jeddah"],["Makkah","Ziyarat Tour","🕋","route-ziyarat"]];
+var routes=[["Jeddah Airport","Makkah","✈️","route-jeddah-makkah",200],["Makkah","Madinah","🕌","route-makkah-madinah",350],["Madinah","Jeddah Airport","🛣️","route-madinah-jeddah",null],["Makkah","Ziyarat Tour","🕋","route-ziyarat",160]];
 var rc=document.getElementById("routeCards");
 routes.forEach(function(r){var d=document.createElement("div");d.className="card";
-d.innerHTML='<div class="img" data-img="/images/'+r[3]+'.jpg">'+r[2]+'</div><div class="b"><b>'+r[0]+' &rarr; '+r[1]+'</b><p>Private ride, clear quote before travel.</p><a class="btn s" href="#book">Request a Quote</a></div>';
+d.innerHTML='<div class="img" data-img="/images/'+r[3]+'.jpg">'+r[2]+'</div><div class="b"><b>'+r[0]+' &rarr; '+r[1]+'</b>'+(r[4]?'<p class="from"><span>From</span> SAR '+r[4]+'</p>':'')+'<p>Private ride, clear quote before travel.</p><a class="btn s" href="#book">Request a Quote</a></div>';
 d.querySelector("a").onclick=function(){setSel("from",r[0]);setSel("to",r[1])};rc.appendChild(d)});
 // photos: if the file exists in /images it replaces the emoji placeholder
 document.querySelectorAll("[data-img]").forEach(function(el){var i=new Image();
@@ -13,6 +13,17 @@ document.querySelectorAll("[data-v]").forEach(function(a){a.onclick=function(){s
 var today=new Date().toISOString().split("T")[0];
 ["date","rdate"].forEach(function(i){document.getElementById(i).min=today});
 document.getElementById("trip").onchange=function(){var r=this.value==="return";document.querySelectorAll(".ret").forEach(function(e){e.style.display=r?"":"none"})};
+document.querySelectorAll(".zb").forEach(function(a){a.onclick=function(){setSel("to","Ziyarat Tour");document.getElementById("notes").value=a.dataset.tour}});
+// ---- RATES TABLE: edit prices here (columns: Sedan, SUV, Staria, HiAce). null = "Ask" ----
+var RATES=[["Jeddah Airport → Makkah",200,400,280,300],["Makkah → Jeddah Airport",160,320,200,280],["Makkah → Madinah",350,640,450,500],["Madinah → Makkah",null,null,450,null],
+["Madinah Hotel → Madinah Airport",100,240,150,180],["Madinah Airport → Madinah Hotel",150,280,200,250],["Makkah Ziyarat",160,320,220,280],["Madinah Ziyarat",160,320,200,250],["Badr Ziyarat",null,null,null,null],
+["Taif Ziyarat / Tour",300,760,350,450],["Makkah Hotel → Miqat",100,240,150,180],["Makkah → Jeddah Tours",280,440,350,450],["Kiswa Factory + Museum Ziyarat",200,400,250,350]];
+var RV=["Luxury Sedan","Premium SUV","Family Van","Group Minibus"];
+var rb=document.getElementById("rateBody");
+RATES.forEach(function(r){var tr=document.createElement("tr"),td=document.createElement("td");td.textContent=r[0];tr.appendChild(td);
+ for(var i=1;i<5;i++){var c=document.createElement("td"),a=document.createElement("a");a.href="#book";a.className="pc";a.textContent=r[i]===null?"Ask":r[i];
+  (function(i,r){a.onclick=function(){setSel("veh",RV[i-1]);document.getElementById("notes").value=r[0]+(r[i]!==null?" - "+r[i]+" SAR":"")}})(i,r);c.appendChild(a);tr.appendChild(c)}
+ rb.appendChild(tr)});
 function G(i){return document.getElementById(i).value.trim()}
 function send(e){e.preventDefault();
 var m=document.getElementById("msg"),btn=e.target.querySelector("button");m.className="";
