@@ -1,7 +1,6 @@
 const { redis, authed } = require('../_lib');
 module.exports = async (req, res) => {
-  if (!process.env.ADMIN_PASSWORD) return res.status(500).json({ error: 'ADMIN_PASSWORD is not set' });
-  if (!authed(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!(await authed(req))) return res.status(401).json({ error: 'Unauthorized' });
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   try {
     const [flat] = await redis([['HGETALL', 'zha:bookings']]);

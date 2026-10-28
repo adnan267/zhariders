@@ -7,7 +7,9 @@ input,select,button,a.b{padding:8px 10px;border-radius:8px;border:1px solid #ccc
 <header><b>ZHA Riders Makkah - Admin</b><span id="cnt"></span></header>
 <div id="login"><b>Admin login</b><input id="u" value="admin" autocomplete="username"><input id="p" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')go()"><button onclick="go()">Login</button><span id="err" style="color:#a33;font-size:13px"></span></div>
 <main id="app" style="display:none">
-<p><button id="tb" class="on" onclick="tab('b')">Bookings</button> <button id="tr" onclick="tab('r')">Reviews <span id="pc"></span></button> <button onclick="load()">Refresh</button> <button onclick="sessionStorage.clear();location.reload()">Logout</button></p>
+<p><button id="tb" class="on" onclick="tab('b')">Bookings</button> <button id="tr" onclick="tab('r')">Reviews <span id="pc"></span></button> <button onclick="load()">Refresh</button> <button onclick="togPw()">Change password</button> <button onclick="sessionStorage.clear();location.reload()">Logout</button></p>
+<div id="pp" style="display:none;background:#fff;padding:14px;border-radius:10px;margin-bottom:16px;max-width:420px"><b>Change admin password</b>
+<div class="add" style="flex-direction:column"><input id="np1" type="password" placeholder="New password (min 12 characters)" autocomplete="new-password"><input id="np2" type="password" placeholder="Repeat new password" autocomplete="new-password"><div><button onclick="savePw()">Save password</button> <button onclick="togPw()">Cancel</button> <span id="pmsg" style="font-size:13px"></span></div></div></div>
 <div id="pb"><p><select id="f" onchange="draw()"><option value="">All</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select></p>
 <table><thead><tr><th>Ref</th><th>Received</th><th>Customer</th><th>Trip</th><th>Details</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table></div>
 <div id="pr" style="display:none"><div class="add"><input id="rn" placeholder="Name"><select id="rr"><option>5</option><option>4</option><option>3</option></select><input id="rt" placeholder="Review text (e.g. received on WhatsApp)" style="flex:1;min-width:220px"><button onclick="addRev()">Add &amp; publish</button></div>
@@ -20,8 +22,20 @@ function go(){A=btoa(document.getElementById('u').value+':'+document.getElementB
 function tab(x){document.getElementById('pb').style.display=x==='b'?'':'none';document.getElementById('pr').style.display=x==='r'?'':'none';document.getElementById('tb').className=x==='b'?'on':'';document.getElementById('tr').className=x==='r'?'on':''}
 function load(first){Promise.all([api('/api/admin/bookings'),api('/api/admin/reviews')]).then(function(rs){
  if(rs[0].status===401){sessionStorage.removeItem('zha');document.getElementById('login').style.display='grid';document.getElementById('app').style.display='none';if(first)document.getElementById('err').textContent='Wrong username or password';return null}
- if(!rs[0].ok||!rs[1].ok){document.getElementById('err').textContent='Server error (are ADMIN_PASSWORD and the database set up?)';return null}
+ if(rs[0].status===429){document.getElementById('err').textContent='Too many failed attempts. Try again in 15 minutes.';return null}
+ if(!rs[0].ok||!rs[1].ok){document.getElementById('err').textContent='Server error. Check that the Upstash database is connected and the latest deployment is ready.';return null}
  return Promise.all([rs[0].json(),rs[1].json()])}).then(function(j){if(!j)return;sessionStorage.setItem('zha',A);document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';B=j[0];R=j[1];draw()})}
+function togPw(){var p=document.getElementById('pp');p.style.display=p.style.display==='none'?'block':'none';document.getElementById('pmsg').textContent=''}
+function savePw(){var a=document.getElementById('np1').value,b=document.getElementById('np2').value,m=document.getElementById('pmsg');
+ if(a.length<12){m.textContent='Use at least 12 characters.';m.style.color='#a33';return}
+ if(a!==b){m.textContent='The two passwords do not match.';m.style.color='#a33';return}
+ m.textContent='Saving...';m.style.color='#555';
+ api('/api/admin/password',{method:'POST',body:JSON.stringify({password:a})}).then(function(r){
+  if(!r.ok){m.textContent='Could not save ('+r.status+'). Log in again and retry.';m.style.color='#a33';return}
+  A=btoa(document.getElementById('u').value+':'+a);sessionStorage.setItem('zha',A);
+  document.getElementById('np1').value='';document.getElementById('np2').value='';
+  m.textContent='Password changed. Use it from now on.';m.style.color='#2a7';
+ })}
 function sel(list,cur,fn,id){return '<select onchange="'+fn+'(\''+id+'\',this.value)">'+list.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>'}).join('')+'</select>'}
 function draw(){var f=document.getElementById('f').value,rows=B.filter(function(b){return!f||b.status===f});
 document.getElementById('cnt').textContent=rows.length+' bookings';

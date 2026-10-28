@@ -13,6 +13,12 @@
    - TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID   (optional, for instant booking alerts)
 4. Redeploy. Open /admin to log in.
 
+## Admin password
+- Log in at /admin, click **Change password**, enter a new password (at least 12 characters) twice.
+- The new password is stored as a salted hash in Redis (key `zha:admin`). After that, the ADMIN_PASSWORD env var is no longer used.
+- Forgot the password? In the Upstash console, delete the key `zha:admin`. ADMIN_PASSWORD then works again (redeploy is not needed).
+- Too many wrong logins from one IP (10 in 15 minutes) are blocked for 15 minutes.
+
 ## Telegram alerts
 1. In Telegram open @BotFather, send /newbot, copy the token it gives you.
 2. Open your new bot and press Start / send "hi".

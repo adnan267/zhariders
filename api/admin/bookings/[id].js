@@ -1,7 +1,6 @@
 const { redis, authed, STATUS } = require('../../_lib');
 module.exports = async (req, res) => {
-  if (!process.env.ADMIN_PASSWORD) return res.status(500).json({ error: 'ADMIN_PASSWORD is not set' });
-  if (!authed(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!(await authed(req))) return res.status(401).json({ error: 'Unauthorized' });
   const id = String(req.query.id || '');
   if (!/^[\w-]{10,60}$/.test(id)) return res.status(400).json({ error: 'Bad id' });
   try {
