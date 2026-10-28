@@ -1,31 +1,110 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>ZHA Admin</title>
-<style>body{font-family:system-ui,Arial;margin:0;background:#f5f1e6;color:#1b1b1f}header{background:#0b0b0d;color:#f0cf7a;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-main{padding:20px;overflow-x:auto}table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-bottom:16px}th,td{padding:10px;border-bottom:1px solid #e8e0cc;text-align:left;vertical-align:top}th{background:#fbf7ee}
-input,select,button,a.b{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:13px;text-decoration:none;color:inherit}a.wa{background:#25d366;color:#fff;border-color:#25d366}button.on{background:#0b0b0d;color:#f0cf7a}
+<style>
+*{box-sizing:border-box}
+body{font-family:system-ui,Arial;margin:0;background:#f5f1e6;color:#1b1b1f}
+.top{background:#0b0b0d;color:#f0cf7a;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.shell{display:flex;min-height:calc(100vh - 50px)}
+aside{width:220px;background:#15151a;padding:12px 0;flex-shrink:0}
+aside button{display:block;width:100%;text-align:left;background:none;border:0;color:#d8d2c0;padding:11px 20px;font-size:14px;border-radius:0;cursor:pointer}
+aside button:hover{background:#23232b;color:#fff}
+aside button.on{background:#f0cf7a;color:#0b0b0d;font-weight:600}
+aside hr{border:0;border-top:1px solid #2c2c35;margin:10px 16px}
+main{flex:1;padding:22px;overflow-x:auto;min-width:0}
+h2{margin:0 0 14px;font-size:20px}
+input,select,button,textarea{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;color:inherit}
+button.pri{background:#0b0b0d;color:#f0cf7a;border-color:#0b0b0d}
+a.b{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:13px;text-decoration:none;color:inherit}
+a.wa{background:#25d366;color:#fff;border-color:#25d366}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-bottom:16px}th,td{padding:10px;border-bottom:1px solid #e8e0cc;text-align:left;vertical-align:top}th{background:#fbf7ee}
+.s-new,.s-pending{background:#fff3cd}.s-confirmed,.s-approved{background:#d4edda}.s-cancelled,.s-hidden{background:#f8d7da}.s-completed{background:#e2e3e5}
 #login{max-width:320px;margin:80px auto;background:#fff;padding:24px;border-radius:14px;display:grid;gap:10px}
-.s-new,.s-pending{background:#fff3cd}.s-confirmed,.s-approved{background:#d4edda}.s-cancelled,.s-hidden{background:#f8d7da}.s-completed{background:#e2e3e5}.add{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}</style></head><body>
-<header><b>ZHA Riders Makkah - Admin</b><span id="cnt"></span></header>
-<div id="login"><b>Admin login</b><input id="u" value="admin" autocomplete="username"><input id="p" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')go()"><button onclick="go()">Login</button><span id="err" style="color:#a33;font-size:13px"></span></div>
-<main id="app" style="display:none">
-<p><button id="tb" class="on" onclick="tab('b')">Bookings</button> <button id="tr" onclick="tab('r')">Reviews <span id="pc"></span></button> <button onclick="load()">Refresh</button> <button onclick="togPw()">Change password</button> <button onclick="sessionStorage.clear();location.reload()">Logout</button></p>
-<div id="pp" style="display:none;background:#fff;padding:14px;border-radius:10px;margin-bottom:16px;max-width:420px"><b>Change admin password</b>
-<div class="add" style="flex-direction:column"><input id="np1" type="password" placeholder="New password (min 12 characters)" autocomplete="new-password"><input id="np2" type="password" placeholder="Repeat new password" autocomplete="new-password"><div><button onclick="savePw()">Save password</button> <button onclick="togPw()">Cancel</button> <span id="pmsg" style="font-size:13px"></span></div></div></div>
-<div id="pb"><p><select id="f" onchange="draw()"><option value="">All</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select></p>
-<table><thead><tr><th>Ref</th><th>Received</th><th>Customer</th><th>Trip</th><th>Details</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table></div>
-<div id="pr" style="display:none"><div class="add"><input id="rn" placeholder="Name"><select id="rr"><option>5</option><option>4</option><option>3</option></select><input id="rt" placeholder="Review text (e.g. received on WhatsApp)" style="flex:1;min-width:220px"><button onclick="addRev()">Add &amp; publish</button></div>
-<table><thead><tr><th>Date</th><th>Name</th><th>Rating</th><th>Review</th><th>Status</th><th></th></tr></thead><tbody id="rv"></tbody></table></div></main>
+.sec{display:none}.sec.on{display:block}
+.add{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
+.card-box{background:#fff;padding:14px;border-radius:10px;margin-bottom:16px;max-width:460px}
+.row{background:#fff;border:1px solid #e8e0cc;border-radius:10px;padding:12px;margin-bottom:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end}
+.row label{font-size:12px;color:#666;display:block;margin-bottom:3px}
+.row input,.row textarea{width:100%}
+.row textarea{min-height:64px}
+.row .full{grid-column:1/-1}
+.row .chk label{display:flex;gap:6px;align-items:center;color:#1b1b1f;font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px;align-items:center}
+.hint{color:#666;font-size:13px;margin:-4px 0 14px}
+.msg{font-size:13px}
+@media(max-width:760px){.shell{flex-direction:column}aside{width:auto;display:flex;flex-wrap:wrap}aside button{width:auto;padding:9px 12px}aside hr{display:none}}
+</style></head><body>
+<div class="top"><b>ZHA Riders Makkah - Admin</b><span id="flash" style="font-size:13px"></span></div>
+<div id="login"><b>Admin login</b><input id="u" value="admin" autocomplete="username"><input id="p" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')go()"><button class="pri" onclick="go()">Login</button><span id="err" style="color:#a33;font-size:13px"></span></div>
+
+<div class="shell" id="app" style="display:none">
+<aside>
+ <button id="nav-bookings" onclick="show('bookings')">Bookings</button>
+ <button id="nav-reviews" onclick="show('reviews')">Reviews <span id="pc"></span></button>
+ <hr>
+ <button id="nav-services" onclick="show('services')">Services</button>
+ <button id="nav-ziyarat" onclick="show('ziyarat')">Ziyarat tours</button>
+ <button id="nav-routes" onclick="show('routes')">Popular routes</button>
+ <button id="nav-rates" onclick="show('rates')">Rates</button>
+ <button id="nav-fleet" onclick="show('fleet')">Fleet</button>
+ <hr>
+ <button id="nav-password" onclick="show('password')">Change password</button>
+ <button onclick="load(false)">Refresh</button>
+ <button onclick="sessionStorage.clear();location.reload()">Logout</button>
+</aside>
+<main>
+ <section class="sec" id="s-bookings">
+  <h2>Bookings <span id="cnt" style="font-size:14px;color:#666;font-weight:normal"></span></h2>
+  <p><select id="f" onchange="draw()"><option value="">All</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select></p>
+  <table><thead><tr><th>Ref</th><th>Received</th><th>Customer</th><th>Trip</th><th>Details</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table>
+ </section>
+
+ <section class="sec" id="s-reviews">
+  <h2>Reviews</h2>
+  <div class="add"><input id="rn" placeholder="Name"><select id="rr"><option>5</option><option>4</option><option>3</option></select><input id="rt" placeholder="Review text (e.g. received on WhatsApp)" style="flex:1;min-width:220px"><button class="pri" onclick="addRev()">Add &amp; publish</button></div>
+  <table><thead><tr><th>Date</th><th>Name</th><th>Rating</th><th>Review</th><th>Status</th><th></th></tr></thead><tbody id="rv"></tbody></table>
+ </section>
+
+ <section class="sec" id="s-password">
+  <h2>Change password</h2>
+  <div class="card-box"><div class="add" style="flex-direction:column;align-items:stretch">
+   <input id="np1" type="password" placeholder="New password (min 12 characters)" autocomplete="new-password">
+   <input id="np2" type="password" placeholder="Repeat new password" autocomplete="new-password">
+   <div><button class="pri" onclick="savePw()">Save password</button> <span id="pmsg" class="msg"></span></div>
+  </div></div>
+ </section>
+
+ <section class="sec" id="s-services"><h2>Services</h2><p class="hint">These cards appear in "Our Services" on the website. Hide an item with the checkbox, or remove it.</p><div id="ed-services"></div>
+  <div class="actions"><button onclick="addItem('services')">+ Add service</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
+
+ <section class="sec" id="s-ziyarat"><h2>Ziyarat tours</h2><p class="hint">Tour packages shown in "Ziyarat Tours". "From price" can be left empty to hide the price line. Bullet points: one per line.</p><div id="ed-ziyarat"></div>
+  <div class="actions"><button onclick="addItem('ziyarat')">+ Add tour</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
+
+ <section class="sec" id="s-routes"><h2>Popular routes</h2><p class="hint">Route cards on the website. Clicking a card fills the booking form. The starting price is optional.</p><div id="ed-routes"></div>
+  <div class="actions"><button onclick="addItem('routes')">+ Add route</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
+
+ <section class="sec" id="s-rates"><h2>Transport rates</h2><p class="hint">Prices in SAR per trip. Leave a price empty to show "Ask".</p><div id="ed-rates"></div>
+  <div class="actions"><button onclick="addItem('rates')">+ Add route</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
+
+ <section class="sec" id="s-fleet"><h2>Fleet</h2><p class="hint">Vehicles shown in "Our Fleet". The vehicle name must match the rate table columns (Luxury Sedan, Premium SUV, Family Van, Group Minibus).</p><div id="ed-fleet"></div>
+  <div class="actions"><button onclick="addItem('fleet')">+ Add vehicle</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
+</main>
+</div>
+
 <script>
-var A=sessionStorage.getItem('zha'),B=[],R=[];
+var A=sessionStorage.getItem('zha'),B=[],R=[],C=null;
 var E=function(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML};
+var ATTR=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')};
 function api(path,opt){opt=opt||{};opt.headers=Object.assign({Authorization:'Basic '+A,'Content-Type':'application/json'},opt.headers||{});return fetch(path,opt)}
+function flash(t,ok){var f=document.getElementById('flash');f.textContent=t;f.style.color=ok?'#9fe3b0':'#ffb4b4'}
 function go(){A=btoa(document.getElementById('u').value+':'+document.getElementById('p').value);load(true)}
-function tab(x){document.getElementById('pb').style.display=x==='b'?'':'none';document.getElementById('pr').style.display=x==='r'?'':'none';document.getElementById('tb').className=x==='b'?'on':'';document.getElementById('tr').className=x==='r'?'on':''}
+function show(name){
+ ['bookings','reviews','password','services','ziyarat','routes','rates','fleet'].forEach(function(n){
+  document.getElementById('s-'+n).classList.toggle('on',n===name);document.getElementById('nav-'+n).classList.toggle('on',n===name)});
+}
 function load(first){Promise.all([api('/api/admin/bookings'),api('/api/admin/reviews')]).then(function(rs){
  if(rs[0].status===401){sessionStorage.removeItem('zha');document.getElementById('login').style.display='grid';document.getElementById('app').style.display='none';if(first)document.getElementById('err').textContent='Wrong username or password';return null}
  if(rs[0].status===429){document.getElementById('err').textContent='Too many failed attempts. Try again in 15 minutes.';return null}
  if(!rs[0].ok||!rs[1].ok){document.getElementById('err').textContent='Server error. Check that the Upstash database is connected and the latest deployment is ready.';return null}
- return Promise.all([rs[0].json(),rs[1].json()])}).then(function(j){if(!j)return;sessionStorage.setItem('zha',A);document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';B=j[0];R=j[1];draw()})}
-function togPw(){var p=document.getElementById('pp');p.style.display=p.style.display==='none'?'block':'none';document.getElementById('pmsg').textContent=''}
+ return Promise.all([rs[0].json(),rs[1].json()])}).then(function(j){if(!j)return;sessionStorage.setItem('zha',A);document.getElementById('login').style.display='none';document.getElementById('app').style.display='flex';B=j[0];R=j[1];draw();if(first){loadContent();show('bookings')}})}
 function savePw(){var a=document.getElementById('np1').value,b=document.getElementById('np2').value,m=document.getElementById('pmsg');
  if(a.length<12){m.textContent='Use at least 12 characters.';m.style.color='#a33';return}
  if(a!==b){m.textContent='The two passwords do not match.';m.style.color='#a33';return}
@@ -45,10 +124,45 @@ return '<tr class="s-'+b.status+'"><td><b>'+E(b.ref)+'</b></td><td>'+new Date(b.
 +'<td>'+sel(['new','contacted','confirmed','completed','cancelled'],b.status,'setS',b.id)+'</td>'
 +'<td>'+(ph?'<a class="b wa" target="_blank" href="https://wa.me/'+ph+'?text='+encodeURIComponent('Assalamu Alaikum, ZHA Riders Makkah here. Regarding your booking '+b.ref+'.')+'">WhatsApp</a> ':'')+'<button onclick="del(\''+b.id+'\')">Delete</button></td></tr>'}).join('');
 document.getElementById('rv').innerHTML=R.map(function(r){return '<tr class="s-'+r.status+'"><td>'+new Date(r.created).toLocaleDateString()+'</td><td>'+E(r.name)+'</td><td>'+'★★★★★'.slice(0,r.rating)+'</td><td>'+E(r.text)+'</td><td>'+sel(['pending','approved','hidden'],r.status,'setR',r.id)+'</td><td><button onclick="delR(\''+r.id+'\')">Delete</button></td></tr>'}).join('')}
-function setS(id,s){api('/api/admin/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:s})}).then(function(){load()})}
-function del(id){if(confirm('Delete this booking?'))api('/api/admin/bookings/'+id,{method:'DELETE'}).then(function(){load()})}
-function setR(id,s){api('/api/admin/reviews/'+id,{method:'PATCH',body:JSON.stringify({status:s})}).then(function(){load()})}
-function delR(id){if(confirm('Delete this review?'))api('/api/admin/reviews/'+id,{method:'DELETE'}).then(function(){load()})}
-function addRev(){api('/api/admin/reviews',{method:'POST',body:JSON.stringify({name:document.getElementById('rn').value,rating:document.getElementById('rr').value,text:document.getElementById('rt').value})}).then(function(r){if(r.ok){document.getElementById('rn').value='';document.getElementById('rt').value='';load()}else alert('Review text must be at least 10 characters')})}
-if(A)load();
+function setS(id,s){api('/api/admin/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:s})}).then(function(){load(false)})}
+function del(id){if(confirm('Delete this booking?'))api('/api/admin/bookings/'+id,{method:'DELETE'}).then(function(){load(false)})}
+function setR(id,s){api('/api/admin/reviews/'+id,{method:'PATCH',body:JSON.stringify({status:s})}).then(function(){load(false)})}
+function delR(id){if(confirm('Delete this review?'))api('/api/admin/reviews/'+id,{method:'DELETE'}).then(function(){load(false)})}
+function addRev(){api('/api/admin/reviews',{method:'POST',body:JSON.stringify({name:document.getElementById('rn').value,rating:document.getElementById('rr').value,text:document.getElementById('rt').value})}).then(function(r){if(r.ok){document.getElementById('rn').value='';document.getElementById('rt').value='';load(false)}else alert('Review text must be at least 10 characters')})}
+
+// ---- SITE CONTENT EDITOR ----
+// [field, label, type]: type 'long' = textarea, 'lines' = textarea (one per line), 'num' = number, default = text
+var CFG={
+ services:[['title','Title'],['emoji','Emoji (shown when there is no photo)'],['image','Photo path, e.g. /images/service-airport.jpg'],['desc','Description','long']],
+ ziyarat:[['title','Tour name'],['from','From price (SAR)','num'],['emoji','Emoji'],['image','Photo path, e.g. /images/ziyarat-makkah.jpg'],['desc','Description','long'],['points','Bullet points (one per line)','lines']],
+ routes:[['from','From'],['to','To'],['price','Starting price (SAR)','num'],['emoji','Emoji'],['image','Photo path, e.g. /images/route-makkah-madinah.jpg']],
+ rates:[['route','Route / destination'],['sedan','Luxury Sedan (SAR)','num'],['suv','Premium SUV (SAR)','num'],['staria','Family Van (SAR)','num'],['hiace','Group Minibus (SAR)','num']],
+ fleet:[['name','Vehicle name'],['desc','Details (seats, bags)'],['emoji','Emoji'],['image','Photo path, e.g. /images/fleet-sedan.jpg']]
+};
+function loadContent(){return api('/api/admin/content').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){C=d;Object.keys(CFG).forEach(renderSec)}).catch(function(){flash('Could not load site content.',false)})}
+function renderSec(k){
+ var list=(C&&C[k])||[];
+ document.getElementById('ed-'+k).innerHTML=list.map(function(it,i){
+  var at=' data-k="'+k+'" data-i="'+i+'"';
+  var fields=CFG[k].map(function(f){var v=it[f[0]];if(v==null)v='';if(Array.isArray(v))v=v.join('\n');
+   var lab='<label>'+E(f[1])+'</label>';
+   if(f[2]==='long'||f[2]==='lines')return '<div class="full">'+lab+'<textarea'+at+' data-f="'+f[0]+'">'+E(v)+'</textarea></div>';
+   return '<div>'+lab+'<input'+at+' data-f="'+f[0]+'"'+(f[2]==='num'?' inputmode="numeric"':'')+' value="'+ATTR(v)+'"></div>'}).join('');
+  return '<div class="row">'+fields+'<div class="chk"><label><input type="checkbox"'+at+' data-f="visible"'+(it.visible?' checked':'')+'> Show on website</label></div><div><button onclick="rmItem(\''+k+'\','+i+')">Remove</button></div></div>'
+ }).join('')||'<p>No items yet. Use the button below to add one.</p>'}
+// keep the in-memory copy in step with what the admin types
+function onEdit(e){var t=e.target;if(!t.dataset||!t.dataset.k)return;var item=C[t.dataset.k][+t.dataset.i];if(!item)return;
+ item[t.dataset.f]=t.type==='checkbox'?t.checked:t.value}
+document.addEventListener('input',onEdit);document.addEventListener('change',onEdit);
+function addItem(k){var o={visible:true};CFG[k].forEach(function(f){o[f[0]]=''});C[k].push(o);renderSec(k);
+ var rows=document.querySelectorAll('#ed-'+k+' .row');if(rows.length)rows[rows.length-1].querySelector('input,textarea').focus()}
+function rmItem(k,i){if(confirm('Remove this item from the website?')){C[k].splice(i,1);renderSec(k)}}
+function saveContent(){
+ flash('Saving...',true);
+ api('/api/admin/content',{method:'PUT',body:JSON.stringify(C)}).then(function(r){
+  if(!r.ok){flash('Could not save ('+r.status+'). Check the fields and try again.',false);return}
+  return r.json().then(function(d){C=d;Object.keys(CFG).forEach(renderSec);flash('Saved. The website updates within about a minute.',true)})})
+ .catch(function(){flash('Could not save. Check your connection.',false)})}
+
+if(A){load(false);loadContent();show('bookings')}
 </script></body></html>

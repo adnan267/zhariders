@@ -13,6 +13,19 @@
    - TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID   (optional, for instant booking alerts)
 4. Redeploy. Open /admin to log in.
 
+## Managing the website content (/admin)
+The left menu opens each section:
+- **Services**: cards in "Our Services".
+- **Ziyarat tours**: tour packages with price, description and bullet points.
+- **Popular routes**: route cards (clicking one fills the booking form).
+- **Rates**: the price table (SAR per trip, empty price = "Ask").
+- **Fleet**: vehicles in "Our Fleet".
+
+Add, edit, hide (untick "Show on website") or remove items, then press **Save and publish**. The website updates within about a minute. Photos go in public/images/ and are referenced by path (for example /images/fleet-van.jpg). Photos are optional; without one, the emoji is shown.
+
+Content is stored in Redis under the key `zha:content`. Until you save once, the website shows the default content.
+Limitations: managed text is in English only, and the booking form's From/To dropdowns are still fixed in index.html.
+
 ## Admin password
 - Log in at /admin, click **Change password**, enter a new password (at least 12 characters) twice.
 - The new password is stored as a salted hash in Redis (key `zha:admin`). After that, the ADMIN_PASSWORD env var is no longer used.
