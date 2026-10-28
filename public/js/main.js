@@ -34,6 +34,7 @@ document.addEventListener("click",function(e){var t=e.target;if(!t||!t.closest)r
  var rv=t.closest("[data-rv]");if(rv){setSel("veh",rv.getAttribute("data-rv"));byId("notes").value=rv.getAttribute("data-note")}});
 
 fetch("/api/content").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(c){
+ var hero=document.querySelector(".hero");if(hero&&c.settings&&c.settings.hero)hero.setAttribute("data-img",c.settings.hero);
  renderServices(c.services||[]);renderZiyarat(c.ziyarat||[]);renderRoutes(c.routes||[]);renderRates(c.rates||[]);renderFleet(c.fleet||[]);
  loadImgs(document)}).catch(function(){loadImgs(document)}); // if the API is down, the static HTML stays
 

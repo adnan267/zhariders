@@ -16,6 +16,7 @@ function defaults() {
   const pts = ['Driver explains every location', 'Private family tours available', 'Pickup and drop-off included', 'Clean and comfortable vehicle'];
   const rate = (route, a, b, c, d) => ({ route, sedan: a ?? '', suv: b ?? '', staria: c ?? '', hiace: d ?? '', visible: true });
   return {
+    settings: { hero: '/images/hero.jpg' },
     services: [
       { title: 'Airport Transfers', desc: 'Hassle-free pickups and drop-offs from Jeddah Airport.', emoji: '✈️', image: '/images/service-airport.jpg', visible: true },
       { title: 'Umrah & Hotel Transfers', desc: 'Comfortable transfers to and from your hotel and Masjid.', emoji: '🕋', image: '/images/service-umrah.jpg', visible: true },
@@ -62,7 +63,8 @@ const num = v => {
   const n = parseInt(v, 10);
   return Number.isFinite(n) && n >= 0 && n <= 100000 ? n : '';
 };
-const imgPath = v => { const s = clean(v, 120); return /^\/images\/[A-Za-z0-9._\/-]+$/.test(s) ? s : ''; };
+// Allowed image sources: files in public/images or images uploaded through the admin media library.
+const imgPath = v => { const s = clean(v, 120); return /^\/images\/[A-Za-z0-9._\/-]+$/.test(s) || /^\/api\/img\/[a-f0-9]{24}$/.test(s) ? s : ''; };
 const lines = v => (Array.isArray(v) ? v : String(v || '').split(/\n/)).map(x => clean(x, 120)).filter(Boolean).slice(0, 10);
 
 // Accepts anything the admin page sends and returns a safe, complete document.
@@ -83,6 +85,8 @@ function sanitize(d) {
       return o;
     }).filter(o => o[first]);
   }
+  const s = (d && d.settings) || {};
+  out.settings = { hero: imgPath(s.hero) };
   return out;
 }
 

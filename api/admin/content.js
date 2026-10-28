@@ -6,7 +6,9 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') {
       const [raw] = await redis([['GET', 'zha:content']]);
-      return res.status(200).json(raw ? JSON.parse(raw) : defaults());
+      const data = raw ? JSON.parse(raw) : defaults();
+      if (!data.settings) data.settings = defaults().settings;
+      return res.status(200).json(data);
     }
     if (req.method === 'PUT') {
       const clean = sanitize(req.body);

@@ -21,7 +21,11 @@ The left menu opens each section:
 - **Rates**: the price table (SAR per trip, empty price = "Ask").
 - **Fleet**: vehicles in "Our Fleet".
 
-Add, edit, hide (untick "Show on website") or remove items, then press **Save and publish**. The website updates within about a minute. Photos go in public/images/ and are referenced by path (for example /images/fleet-van.jpg). Photos are optional; without one, the emoji is shown.
+- **Images & banner**: upload photos (JPG, PNG, WebP) and choose the homepage banner.
+
+Add, edit, hide (untick "Show on website") or remove items, then press **Save and publish**. The website updates within about a minute.
+
+Photos: press **Choose image** on any item and pick from the media library (or upload a new one there). Images are resized in the browser to max 1600px (WebP) before upload, stored in Redis (keys `zha:img:*`, list in `zha:imgmeta`, max 300 images) and served from /api/img/<id> with long CDN caching. Photos are optional; without one, the emoji is shown.
 
 Content is stored in Redis under the key `zha:content`. Until you save once, the website shows the default content.
 Limitations: managed text is in English only, and the booking form's From/To dropdowns are still fixed in index.html.

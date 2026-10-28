@@ -24,12 +24,28 @@ table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-
 .row{background:#fff;border:1px solid #e8e0cc;border-radius:10px;padding:12px;margin-bottom:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end}
 .row label{font-size:12px;color:#666;display:block;margin-bottom:3px}
 .row input,.row textarea{width:100%}
+.row input[type=checkbox]{width:auto;margin:0}
 .row textarea{min-height:64px}
 .row .full{grid-column:1/-1}
 .row .chk label{display:flex;gap:6px;align-items:center;color:#1b1b1f;font-size:13px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px;align-items:center}
 .hint{color:#666;font-size:13px;margin:-4px 0 14px}
 .msg{font-size:13px}
+.pick{display:flex;gap:8px;align-items:center}
+.thumb{width:64px;height:48px;border-radius:6px;background:#eee center/cover no-repeat;border:1px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.gal .it{background:#fff;border:2px solid #e8e0cc;border-radius:10px;overflow:hidden;font-size:12px}
+.gal .it .im{height:100px;background:#eee center/cover no-repeat}
+.gal .it .nm{padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal .it .bt{display:flex;gap:4px;padding:0 6px 6px}
+.gal .it .bt button{flex:1;padding:5px;font-size:12px}
+.gal.choose .it{cursor:pointer}.gal.choose .it:hover{border-color:#f0cf7a}
+.up{display:inline-block;padding:8px 12px;border-radius:8px;background:#0b0b0d;color:#f0cf7a;cursor:pointer;font-size:13px}
+.up input{display:none}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;padding:30px 12px;z-index:50;overflow:auto}
+#modal .box{background:#f5f1e6;border-radius:14px;padding:18px;width:100%;max-width:860px}
+.hero-box{background:#fff;border-radius:10px;padding:14px;margin-bottom:20px;max-width:560px}
+.hero-box .thumb{width:200px;height:110px}
 @media(max-width:760px){.shell{flex-direction:column}aside{width:auto;display:flex;flex-wrap:wrap}aside button{width:auto;padding:9px 12px}aside hr{display:none}}
 </style></head><body>
 <div class="top"><b>ZHA Riders Makkah - Admin</b><span id="flash" style="font-size:13px"></span></div>
@@ -45,6 +61,7 @@ table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-
  <button id="nav-routes" onclick="show('routes')">Popular routes</button>
  <button id="nav-rates" onclick="show('rates')">Rates</button>
  <button id="nav-fleet" onclick="show('fleet')">Fleet</button>
+ <button id="nav-media" onclick="show('media')">Images &amp; banner</button>
  <hr>
  <button id="nav-password" onclick="show('password')">Change password</button>
  <button onclick="load(false)">Refresh</button>
@@ -86,8 +103,23 @@ table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-
 
  <section class="sec" id="s-fleet"><h2>Fleet</h2><p class="hint">Vehicles shown in "Our Fleet". The vehicle name must match the rate table columns (Luxury Sedan, Premium SUV, Family Van, Group Minibus).</p><div id="ed-fleet"></div>
   <div class="actions"><button onclick="addItem('fleet')">+ Add vehicle</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
+
+ <section class="sec" id="s-media"><h2>Images &amp; banner</h2>
+  <div class="hero-box"><b>Homepage banner (top of the website)</b>
+   <div class="pick" style="margin-top:10px"><div class="thumb" id="heroThumb">none</div>
+    <div><button onclick="openPicker('hero')">Choose image</button> <button onclick="setHero('')">Remove</button><br><button class="pri" style="margin-top:8px" onclick="saveContent()">Save and publish</button></div></div></div>
+  <p class="hint">Upload photos here, then pick them for any service, tour, route or vehicle using its "Choose image" button. Photos are resized automatically before upload (JPG, PNG or WebP).</p>
+  <div class="actions"><label class="up">+ Upload images<input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="uploadFiles(this.files);this.value=''"></label><span id="upmsg" class="msg"></span></div>
+  <div class="gal" id="gal"></div>
+ </section>
 </main>
 </div>
+
+<div id="modal" onclick="if(event.target===this)closePicker()"><div class="box">
+ <div class="actions" style="justify-content:space-between"><b>Choose an image</b><span><label class="up">+ Upload new<input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="uploadFiles(this.files);this.value=''"></label> <button onclick="closePicker()">Close</button></span></div>
+ <p class="hint" id="upmsg2"></p>
+ <div class="gal choose" id="pgal"></div>
+</div></div>
 
 <script>
 var A=sessionStorage.getItem('zha'),B=[],R=[],C=null;
@@ -97,8 +129,9 @@ function api(path,opt){opt=opt||{};opt.headers=Object.assign({Authorization:'Bas
 function flash(t,ok){var f=document.getElementById('flash');f.textContent=t;f.style.color=ok?'#9fe3b0':'#ffb4b4'}
 function go(){A=btoa(document.getElementById('u').value+':'+document.getElementById('p').value);load(true)}
 function show(name){
- ['bookings','reviews','password','services','ziyarat','routes','rates','fleet'].forEach(function(n){
+ ['bookings','reviews','password','services','ziyarat','routes','rates','fleet','media'].forEach(function(n){
   document.getElementById('s-'+n).classList.toggle('on',n===name);document.getElementById('nav-'+n).classList.toggle('on',n===name)});
+ if(name==='media')loadMedia();
 }
 function load(first){Promise.all([api('/api/admin/bookings'),api('/api/admin/reviews')]).then(function(rs){
  if(rs[0].status===401){sessionStorage.removeItem('zha');document.getElementById('login').style.display='grid';document.getElementById('app').style.display='none';if(first)document.getElementById('err').textContent='Wrong username or password';return null}
@@ -133,13 +166,17 @@ function addRev(){api('/api/admin/reviews',{method:'POST',body:JSON.stringify({n
 // ---- SITE CONTENT EDITOR ----
 // [field, label, type]: type 'long' = textarea, 'lines' = textarea (one per line), 'num' = number, default = text
 var CFG={
- services:[['title','Title'],['emoji','Emoji (shown when there is no photo)'],['image','Photo path, e.g. /images/service-airport.jpg'],['desc','Description','long']],
- ziyarat:[['title','Tour name'],['from','From price (SAR)','num'],['emoji','Emoji'],['image','Photo path, e.g. /images/ziyarat-makkah.jpg'],['desc','Description','long'],['points','Bullet points (one per line)','lines']],
- routes:[['from','From'],['to','To'],['price','Starting price (SAR)','num'],['emoji','Emoji'],['image','Photo path, e.g. /images/route-makkah-madinah.jpg']],
+ services:[['title','Title'],['emoji','Emoji (shown when there is no photo)'],['image','Photo','img'],['desc','Description','long']],
+ ziyarat:[['title','Tour name'],['from','From price (SAR)','num'],['emoji','Emoji (shown when there is no photo)'],['image','Photo','img'],['desc','Description','long'],['points','Bullet points (one per line)','lines']],
+ routes:[['from','From'],['to','To'],['price','Starting price (SAR)','num'],['emoji','Emoji (shown when there is no photo)'],['image','Photo','img']],
  rates:[['route','Route / destination'],['sedan','Luxury Sedan (SAR)','num'],['suv','Premium SUV (SAR)','num'],['staria','Family Van (SAR)','num'],['hiace','Group Minibus (SAR)','num']],
- fleet:[['name','Vehicle name'],['desc','Details (seats, bags)'],['emoji','Emoji'],['image','Photo path, e.g. /images/fleet-sedan.jpg']]
+ fleet:[['name','Vehicle name'],['desc','Details (seats, bags)'],['emoji','Emoji (shown when there is no photo)'],['image','Photo','img']]
 };
-function loadContent(){return api('/api/admin/content').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){C=d;Object.keys(CFG).forEach(renderSec)}).catch(function(){flash('Could not load site content.',false)})}
+function thumbStyle(v){return v?' style="background-image:url(\''+ATTR(v)+'\')"':''}
+function loadContent(){return api('/api/admin/content').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){C=d;if(!C.settings)C.settings={hero:''};Object.keys(CFG).forEach(renderSec);renderHero()}).catch(function(){flash('Could not load site content.',false)})}
+function renderHero(){var v=C&&C.settings?C.settings.hero:'',t=document.getElementById('heroThumb');
+ t.style.backgroundImage=v?"url('"+v.replace(/'/g,'')+"')":'';t.textContent=v?'':'none'}
+function setHero(v){C.settings.hero=v;renderHero()}
 function renderSec(k){
  var list=(C&&C[k])||[];
  document.getElementById('ed-'+k).innerHTML=list.map(function(it,i){
@@ -147,6 +184,7 @@ function renderSec(k){
   var fields=CFG[k].map(function(f){var v=it[f[0]];if(v==null)v='';if(Array.isArray(v))v=v.join('\n');
    var lab='<label>'+E(f[1])+'</label>';
    if(f[2]==='long'||f[2]==='lines')return '<div class="full">'+lab+'<textarea'+at+' data-f="'+f[0]+'">'+E(v)+'</textarea></div>';
+   if(f[2]==='img')return '<div>'+lab+'<div class="pick"><div class="thumb"'+thumbStyle(v)+'>'+(v?'':'none')+'</div><button onclick="openPicker(\''+k+'\','+i+')">Choose image</button>'+(v?'<button onclick="setImg(\''+k+'\','+i+',\'\')">Remove</button>':'')+'</div></div>';
    return '<div>'+lab+'<input'+at+' data-f="'+f[0]+'"'+(f[2]==='num'?' inputmode="numeric"':'')+' value="'+ATTR(v)+'"></div>'}).join('');
   return '<div class="row">'+fields+'<div class="chk"><label><input type="checkbox"'+at+' data-f="visible"'+(it.visible?' checked':'')+'> Show on website</label></div><div><button onclick="rmItem(\''+k+'\','+i+')">Remove</button></div></div>'
  }).join('')||'<p>No items yet. Use the button below to add one.</p>'}
@@ -161,8 +199,41 @@ function saveContent(){
  flash('Saving...',true);
  api('/api/admin/content',{method:'PUT',body:JSON.stringify(C)}).then(function(r){
   if(!r.ok){flash('Could not save ('+r.status+'). Check the fields and try again.',false);return}
-  return r.json().then(function(d){C=d;Object.keys(CFG).forEach(renderSec);flash('Saved. The website updates within about a minute.',true)})})
+  return r.json().then(function(d){C=d;Object.keys(CFG).forEach(renderSec);renderHero();flash('Saved. The website updates within about a minute.',true)})})
  .catch(function(){flash('Could not save. Check your connection.',false)})}
+
+// ---- IMAGES (media library) ----
+var M=[],PT=null; // M = uploaded images, PT = where the picked image goes ('hero' or {k,i})
+function setImg(k,i,v){C[k][i].image=v;renderSec(k)}
+function loadMedia(){return api('/api/admin/images').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(l){M=l;renderMedia()}).catch(function(){flash('Could not load images.',false)})}
+function galItem(m,choose){
+ return '<div class="it"'+(choose?' onclick="pickImg(\''+m.url+'\')"':'')+'><div class="im" style="background-image:url(\''+m.url+'\')"></div><div class="nm" title="'+ATTR(m.name)+'">'+E(m.name)+'</div>'+
+  (choose?'':'<div class="bt"><button onclick="delImg(\''+m.id+'\')">Delete</button></div>')+'</div>'}
+function renderMedia(){
+ var empty='<p class="hint">No images yet. Use "Upload" to add some.</p>';
+ document.getElementById('gal').innerHTML=M.map(function(m){return galItem(m,false)}).join('')||empty;
+ document.getElementById('pgal').innerHTML=M.map(function(m){return galItem(m,true)}).join('')||empty}
+function openPicker(k,i){PT=k==='hero'?'hero':{k:k,i:i};document.getElementById('modal').style.display='flex';document.getElementById('upmsg2').textContent='Click an image to use it.';loadMedia()}
+function closePicker(){document.getElementById('modal').style.display='none';PT=null}
+function pickImg(url){if(PT==='hero')setHero(url);else if(PT)setImg(PT.k,PT.i,url);closePicker();flash('Image selected. Press "Save and publish" to update the website.',true)}
+function delImg(id){if(!confirm('Delete this image? Items using it will show their emoji instead.'))return;
+ api('/api/admin/images?id='+id,{method:'DELETE'}).then(function(){loadMedia()})}
+// resize in the browser so uploads stay small (max 1600px wide/high)
+function shrink(file){return new Promise(function(ok,bad){
+ var url=URL.createObjectURL(file),img=new Image();
+ img.onload=function(){var max=1600,s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+  var d=c.toDataURL('image/webp',0.82),type='image/webp';
+  if(d.indexOf('data:image/webp')!==0){d=c.toDataURL('image/jpeg',0.85);type='image/jpeg'}
+  ok({name:file.name.replace(/\.[^.]+$/,''),type:type,data:d.split(',')[1]})};
+ img.onerror=function(){URL.revokeObjectURL(url);bad(new Error('Not an image'))};img.src=url})}
+function uploadFiles(files){files=Array.prototype.slice.call(files||[]);if(!files.length)return;
+ var done=0,failed=0,msg=function(t){document.getElementById('upmsg').textContent=t;document.getElementById('upmsg2').textContent=t};
+ msg('Uploading 0 of '+files.length+'...');
+ files.reduce(function(p,f){return p.then(function(){return shrink(f).then(function(x){
+   return api('/api/admin/images',{method:'POST',body:JSON.stringify(x)}).then(function(r){if(!r.ok)throw 0})})
+  .then(function(){done++},function(){failed++}).then(function(){msg('Uploading '+(done+failed)+' of '+files.length+'...')})})},Promise.resolve())
+ .then(function(){msg(done+' uploaded'+(failed?', '+failed+' failed (only JPG, PNG or WebP)':'')+'.');loadMedia()})}
 
 if(A){load(false);loadContent();show('bookings')}
 </script></body></html>
