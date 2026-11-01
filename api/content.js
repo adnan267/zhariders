@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     console.error(e);
     data = defaults(); // database unreachable: still show the default content
   }
-  const pub = { settings: data.settings || defaults().settings };
+  const pub = { settings: Object.assign({}, defaults().settings, data.settings || {}) };
   for (const k of Object.keys(data)) if (Array.isArray(data[k])) pub[k] = data[k].filter(x => x.visible);
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
   return res.status(200).json(pub);

@@ -105,9 +105,11 @@ table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin-
   <div class="actions"><button onclick="addItem('fleet')">+ Add vehicle</button><button class="pri" onclick="saveContent()">Save and publish</button></div></section>
 
  <section class="sec" id="s-media"><h2>Images &amp; banner</h2>
-  <div class="hero-box"><b>Homepage banner (top of the website)</b>
-   <div class="pick" style="margin-top:10px"><div class="thumb" id="heroThumb">none</div>
-    <div><button onclick="openPicker('hero')">Choose image</button> <button onclick="setHero('')">Remove</button><br><button class="pri" style="margin-top:8px" onclick="saveContent()">Save and publish</button></div></div></div>
+  <div class="hero-box"><b>Home slider (3 photos, changes automatically)</b>
+   <div id="slideBoxes" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px"></div></div>
+  <div class="hero-box"><b>Page banners (top of each inner page)</b>
+   <div id="pageBoxes" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px"></div>
+   <button class="pri" style="margin-top:14px" onclick="saveContent()">Save and publish</button></div>
   <p class="hint">Upload photos here, then pick them for any service, tour, route or vehicle using its "Choose image" button. Photos are resized automatically before upload (JPG, PNG or WebP).</p>
   <div class="actions"><label class="up">+ Upload images<input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="uploadFiles(this.files);this.value=''"></label><span id="upmsg" class="msg"></span></div>
   <div class="gal" id="gal"></div>
@@ -173,10 +175,20 @@ var CFG={
  fleet:[['name','Vehicle name'],['desc','Details (seats, bags)'],['emoji','Emoji (shown when there is no photo)'],['image','Photo','img']]
 };
 function thumbStyle(v){return v?' style="background-image:url(\''+ATTR(v)+'\')"':''}
-function loadContent(){return api('/api/admin/content').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){C=d;if(!C.settings)C.settings={hero:''};Object.keys(CFG).forEach(renderSec);renderHero()}).catch(function(){flash('Could not load site content.',false)})}
-function renderHero(){var v=C&&C.settings?C.settings.hero:'',t=document.getElementById('heroThumb');
- t.style.backgroundImage=v?"url('"+v.replace(/'/g,'')+"')":'';t.textContent=v?'':'none'}
-function setHero(v){C.settings.hero=v;renderHero()}
+function loadContent(){return api('/api/admin/content').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){C=d;if(!C.settings)C.settings={slides:[],heroes:{}};Object.keys(CFG).forEach(renderSec);renderHero()}).catch(function(){flash('Could not load site content.',false)})}
+var PAGES=[['services','Services'],['ziyarat','Ziyarat Tours'],['routes','Routes & Rates'],['fleet','Our Fleet'],['about','About'],['faq','FAQ'],['book','Book a Ride']];
+function bgUrl(v){return v?"url('"+String(v).replace(/'/g,'')+"')":''}
+function pickBox(label,v,set,i){return '<div style="width:190px"><b style="font-size:13px">'+E(label)+'</b><div class="thumb" style="width:190px;height:106px;margin:6px 0;background-size:cover;background-position:center;background-image:'+bgUrl(v)+'">'+(v?'':'none')+'</div><button onclick="openSet(\''+set+'\','+i+')">Choose image</button></div>'}
+function renderHero(){
+ var s=C.settings||{},sl=s.slides||[],hs=s.heroes||{};
+ document.getElementById('slideBoxes').innerHTML=[0,1,2].map(function(i){return pickBox('Slide '+(i+1),sl[i]||'','slide',i)}).join('');
+ document.getElementById('pageBoxes').innerHTML=PAGES.map(function(p,i){return pickBox(p[1],hs[p[0]]||'','page',i)}).join('');
+}
+function setSet(set,i,v){C.settings=C.settings||{slides:[],heroes:{}};
+ if(set==='slide'){C.settings.slides=C.settings.slides||[];C.settings.slides[i]=v}
+ else{C.settings.heroes=C.settings.heroes||{};C.settings.heroes[PAGES[i][0]]=v}
+ renderHero()}
+function openSet(set,i){PT={set:set,i:i};document.getElementById('modal').style.display='flex';document.getElementById('upmsg2').textContent='Click an image to use it.';loadMedia()}
 function renderSec(k){
  var list=(C&&C[k])||[];
  document.getElementById('ed-'+k).innerHTML=list.map(function(it,i){
@@ -215,7 +227,7 @@ function renderMedia(){
  document.getElementById('pgal').innerHTML=M.map(function(m){return galItem(m,true)}).join('')||empty}
 function openPicker(k,i){PT=k==='hero'?'hero':{k:k,i:i};document.getElementById('modal').style.display='flex';document.getElementById('upmsg2').textContent='Click an image to use it.';loadMedia()}
 function closePicker(){document.getElementById('modal').style.display='none';PT=null}
-function pickImg(url){if(PT==='hero')setHero(url);else if(PT)setImg(PT.k,PT.i,url);closePicker();flash('Image selected. Press "Save and publish" to update the website.',true)}
+function pickImg(url){if(PT&&PT.set)setSet(PT.set,PT.i,url);else if(PT)setImg(PT.k,PT.i,url);closePicker();flash('Image selected. Press "Save and publish" to update the website.',true)}
 function delImg(id){if(!confirm('Delete this image? Items using it will show their emoji instead.'))return;
  api('/api/admin/images?id='+id,{method:'DELETE'}).then(function(){loadMedia()})}
 // resize in the browser so uploads stay small (max 1600px wide/high)

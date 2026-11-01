@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const [raw] = await redis([['GET', 'zha:content']]);
       const data = raw ? JSON.parse(raw) : defaults();
-      if (!data.settings) data.settings = defaults().settings;
+      data.settings = Object.assign({}, defaults().settings, data.settings || {});
       return res.status(200).json(data);
     }
     if (req.method === 'PUT') {

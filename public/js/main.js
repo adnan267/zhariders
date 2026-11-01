@@ -34,7 +34,7 @@ document.addEventListener("click",function(e){var t=e.target;if(!t||!t.closest)r
  var rv=t.closest("[data-rv]");if(rv){setSel("veh",rv.getAttribute("data-rv"));byId("notes").value=rv.getAttribute("data-note")}});
 
 fetch("/api/content").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(c){
- var hero=document.querySelector(".hero[data-img]");if(hero&&c.settings&&c.settings.hero)hero.setAttribute("data-img",c.settings.hero);
+ var st=c.settings||{};document.querySelectorAll(".slide[data-slot]").forEach(function(el){var u=(st.slides||[])[+el.getAttribute("data-slot")];if(u)el.setAttribute("data-img",u)});var ph=document.querySelector(".hero[data-page]");if(ph&&st.heroes&&st.heroes[ph.getAttribute("data-page")])ph.setAttribute("data-img",st.heroes[ph.getAttribute("data-page")]);
  if(byId("svcCards"))renderServices(c.services||[]);if(byId("zCards"))renderZiyarat(c.ziyarat||[]);if(byId("routeCards"))renderRoutes(c.routes||[]);if(byId("rateBody"))renderRates(c.rates||[]);if(byId("fleetCards"))renderFleet(c.fleet||[]);
  loadImgs(document)}).catch(function(){loadImgs(document)}); // if the API is down, the static HTML stays
 
@@ -75,3 +75,9 @@ fetch("/api/reviews",{method:"POST",headers:{"Content-Type":"application/json"},
  if(!x.ok){m.textContent=x.j.error||"Error";return}m.className="ok";m.textContent=t("Thank you! Your review will appear after approval.");e.target.reset()})
 .catch(function(){m.textContent="Error"});return false}
 initLang();
+
+// home slider: change slide every 6 seconds, dots jump to a slide
+(function(){var sl=document.querySelectorAll(".slide");if(!sl.length)return;var dots=document.querySelectorAll(".dots button"),i=0;
+function go(n){sl[i].classList.remove("on");if(dots[i])dots[i].classList.remove("on");i=n;sl[i].classList.add("on");if(dots[i])dots[i].classList.add("on")}
+setInterval(function(){go((i+1)%sl.length)},6000);
+dots.forEach(function(d,n){d.addEventListener("click",function(){go(n)})})})();
