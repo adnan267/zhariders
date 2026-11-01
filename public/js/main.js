@@ -34,13 +34,15 @@ document.addEventListener("click",function(e){var t=e.target;if(!t||!t.closest)r
  var rv=t.closest("[data-rv]");if(rv){setSel("veh",rv.getAttribute("data-rv"));byId("notes").value=rv.getAttribute("data-note")}});
 
 fetch("/api/content").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(c){
- var hero=document.querySelector(".hero");if(hero&&c.settings&&c.settings.hero)hero.setAttribute("data-img",c.settings.hero);
- renderServices(c.services||[]);renderZiyarat(c.ziyarat||[]);renderRoutes(c.routes||[]);renderRates(c.rates||[]);renderFleet(c.fleet||[]);
+ var hero=document.querySelector(".hero[data-img]");if(hero&&c.settings&&c.settings.hero)hero.setAttribute("data-img",c.settings.hero);
+ if(byId("svcCards"))renderServices(c.services||[]);if(byId("zCards"))renderZiyarat(c.ziyarat||[]);if(byId("routeCards"))renderRoutes(c.routes||[]);if(byId("rateBody"))renderRates(c.rates||[]);if(byId("fleetCards"))renderFleet(c.fleet||[]);
  loadImgs(document)}).catch(function(){loadImgs(document)}); // if the API is down, the static HTML stays
 
+if(byId("book")){
 var today=new Date().toISOString().split("T")[0];
 ["date","rdate"].forEach(function(i){byId(i).min=today});
 byId("trip").onchange=function(){var r=this.value==="return";document.querySelectorAll(".ret").forEach(function(e){e.style.display=r?"":"none"})};
+}
 function G(i){return byId(i).value.trim()}
 function send(e){e.preventDefault();
 var m=byId("msg"),btn=e.target.querySelector("button");m.className="";
@@ -62,7 +64,7 @@ window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(x),"_blank")}
 // reviews
 function stars(n){return "★★★★★".slice(0,n)+"☆☆☆☆☆".slice(0,5-n)}
 fetch("/api/reviews").then(function(r){return r.json()}).then(function(list){
- if(!Array.isArray(list)||!list.length)return;
+ if(!byId("revTop")||!Array.isArray(list)||!list.length)return;
  byId("revTop").style.display="";var box=byId("revList");
  list.forEach(function(v){var d=document.createElement("div");d.className="card rv";var s=document.createElement("div");s.className="stars";s.textContent=stars(v.rating);
  var p=document.createElement("p");p.textContent=v.text;var b=document.createElement("b");b.textContent=v.name;d.appendChild(s);d.appendChild(p);d.appendChild(b);box.appendChild(d)})}).catch(function(){});
