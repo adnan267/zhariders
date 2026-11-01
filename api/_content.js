@@ -16,7 +16,7 @@ function defaults() {
   const pts = ['Driver explains every location', 'Private family tours available', 'Pickup and drop-off included', 'Clean and comfortable vehicle'];
   const rate = (route, a, b, c, d) => ({ route, sedan: a ?? '', suv: b ?? '', staria: c ?? '', hiace: d ?? '', visible: true });
   return {
-    settings: { slides: ['/images/hero-1.jpg', '/images/hero-2.jpg', '/images/hero-3.jpg'], heroes: { services: '/images/hero-services.jpg', ziyarat: '/images/hero-ziyarat.jpg', routes: '/images/hero-routes.jpg', fleet: '/images/hero-fleet.jpg', about: '/images/hero-about.jpg', faq: '/images/hero-faq.jpg', book: '/images/hero-book.jpg' } },
+    settings: { hero: '/images/hero.jpg', heroes: { services: '/images/hero-services.jpg', ziyarat: '/images/hero-ziyarat.jpg', routes: '/images/hero-routes.jpg', fleet: '/images/hero-fleet.jpg', about: '/images/hero-about.jpg', faq: '/images/hero-faq.jpg', book: '/images/hero-book.jpg' } },
     services: [
       { title: 'Airport Transfers', desc: 'Hassle-free pickups and drop-offs from Jeddah Airport.', emoji: '✈️', image: '/images/service-airport.jpg', visible: true },
       { title: 'Umrah & Hotel Transfers', desc: 'Comfortable transfers to and from your hotel and Masjid.', emoji: '🕋', image: '/images/service-umrah.jpg', visible: true },
@@ -88,7 +88,7 @@ function sanitize(d) {
   const s = (d && d.settings) || {};
   const HERO_KEYS = Object.keys(defaults().settings.heroes);
   out.settings = {
-    slides: [0, 1, 2].map(i => imgPath(Array.isArray(s.slides) ? s.slides[i] : '')),
+    hero: imgPath(s.hero),
     heroes: Object.fromEntries(HERO_KEYS.map(k => [k, imgPath(s.heroes ? s.heroes[k] : '')]))
   };
   return out;

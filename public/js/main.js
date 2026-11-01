@@ -6,7 +6,7 @@ function setSel(id,v){var s=byId(id);if(!s)return;for(var i=0;i<s.options.length
 
 // photos: if the file exists in /images it replaces the emoji placeholder
 function loadImgs(root){(root||document).querySelectorAll("[data-img]").forEach(function(el){var i=new Image();
-i.onload=function(){el.style.backgroundImage=el.classList.contains("hero")?"linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url("+i.src+")":"url("+i.src+")";var c=el.firstChild;if(c&&c.nodeType===3&&!el.classList.contains("hero"))c.textContent=""};
+i.onload=function(){el.style.backgroundSize="cover";el.style.backgroundPosition="center";el.style.backgroundImage=el.classList.contains("hero")?"linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url("+i.src+")":"url("+i.src+")";var c=el.firstChild;if(c&&c.nodeType===3&&!el.classList.contains("hero"))c.textContent=""};
 i.src=el.getAttribute("data-img")})}
 
 // ---- SITE CONTENT: services, ziyarat tours, routes, rates and fleet come from /api/content (managed in /admin) ----
@@ -34,7 +34,7 @@ document.addEventListener("click",function(e){var t=e.target;if(!t||!t.closest)r
  var rv=t.closest("[data-rv]");if(rv){setSel("veh",rv.getAttribute("data-rv"));byId("notes").value=rv.getAttribute("data-note")}});
 
 fetch("/api/content").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(c){
- var st=c.settings||{};document.querySelectorAll(".slide[data-slot]").forEach(function(el){var u=(st.slides||[])[+el.getAttribute("data-slot")];if(u)el.setAttribute("data-img",u)});var ph=document.querySelector(".hero[data-page]");if(ph&&st.heroes&&st.heroes[ph.getAttribute("data-page")])ph.setAttribute("data-img",st.heroes[ph.getAttribute("data-page")]);
+ var st=c.settings||{};var hm=document.querySelector(".hero[data-img]:not([data-page])");if(hm&&st.hero)hm.setAttribute("data-img",st.hero);var ph=document.querySelector(".hero[data-page]");if(ph&&st.heroes&&st.heroes[ph.getAttribute("data-page")])ph.setAttribute("data-img",st.heroes[ph.getAttribute("data-page")]);
  if(byId("svcCards"))renderServices(c.services||[]);if(byId("zCards"))renderZiyarat(c.ziyarat||[]);if(byId("routeCards"))renderRoutes(c.routes||[]);if(byId("rateBody"))renderRates(c.rates||[]);if(byId("fleetCards"))renderFleet(c.fleet||[]);
  loadImgs(document)}).catch(function(){loadImgs(document)}); // if the API is down, the static HTML stays
 
@@ -76,8 +76,3 @@ fetch("/api/reviews",{method:"POST",headers:{"Content-Type":"application/json"},
 .catch(function(){m.textContent="Error"});return false}
 initLang();
 
-// home slider: change slide every 6 seconds, dots jump to a slide
-(function(){var sl=document.querySelectorAll(".slide");if(!sl.length)return;var dots=document.querySelectorAll(".dots button"),i=0;
-function go(n){sl[i].classList.remove("on");if(dots[i])dots[i].classList.remove("on");i=n;sl[i].classList.add("on");if(dots[i])dots[i].classList.add("on")}
-setInterval(function(){go((i+1)%sl.length)},6000);
-dots.forEach(function(d,n){d.addEventListener("click",function(){go(n)})})})();
