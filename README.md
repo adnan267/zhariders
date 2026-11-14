@@ -11,6 +11,7 @@
    - ADMIN_PASSWORD   (required, strong password)
    - SITE_URL         (after you buy a domain, e.g. https://zhariders.com)
    - TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID   (optional, for instant booking alerts)
+   - RESEND_API_KEY, NOTIFY_EMAIL, CRON_SECRET   (optional, email alerts, see below)
 4. Redeploy. Open /admin to log in.
 
 ## Admin panel (/admin)
@@ -33,6 +34,21 @@ Limitations: text you type in the admin panel is shown in English unless the sam
 - The new password is stored as a salted hash in Redis (key `zha:admin`). After that, the ADMIN_PASSWORD env var is no longer used.
 - Forgot the password? In the Upstash console, delete the key `zha:admin`. ADMIN_PASSWORD then works again (redeploy is not needed).
 - Too many wrong logins from one IP (10 in 15 minutes) are blocked for 15 minutes.
+
+## Email alerts (new bookings, new reviews, daily rides)
+You get an email for every new booking (with a WhatsApp button for the customer) and every new review,
+plus every morning at about 6:00 Makkah time a list of today's and tomorrow's rides.
+1. Sign up free at https://resend.com **with the email address that should receive the alerts**.
+2. In Resend open **API Keys** > Create API key, copy it (starts with `re_`).
+3. In Vercel > Settings > Environment Variables add:
+   - RESEND_API_KEY = the key
+   - NOTIFY_EMAIL   = the email address that receives alerts (several: separate with commas)
+   - CRON_SECRET    = any long random text (protects the daily rides email)
+4. Redeploy. In /admin > Dashboard press **Send test email**.
+
+Note: without your own domain, Resend can only send to the email address of your Resend account.
+To send to other addresses, verify a domain in Resend and add EMAIL_FROM (e.g. `ZHA Riders <alerts@zhariders.com>`).
+The daily email is skipped on days with no rides and no unanswered requests. Schedule: "crons" in vercel.json.
 
 ## Telegram alerts
 1. In Telegram open @BotFather, send /newbot, copy the token it gives you.

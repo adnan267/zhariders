@@ -1,4 +1,4 @@
-const { redis, clean, crypto, notify } = require('./_lib');
+const { redis, clean, crypto, notify, sendEmail, emailHtml } = require('./_lib');
 module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') {
@@ -21,6 +21,9 @@ module.exports = async (req, res) => {
     const rec = { id: crypto.randomUUID(), name: clean(d.name, 60) || 'Guest', rating, text, status: 'pending', created: new Date().toISOString() };
     await redis([['HSET', 'zha:reviews', rec.id, JSON.stringify(rec)]]);
     await notify('New review waiting for approval (' + rating + '/5)\n' + rec.name + ': ' + text + '\nhttps://' + req.headers.host + '/admin');
+    await sendEmail('New review waiting for approval (' + rating + '/5)', emailHtml('New review waiting for approval', 'Publish it from the admin panel, under Reviews.',
+      [['Name', rec.name], ['Rating', '★★★★★'.slice(0, rating) + ' (' + rating + '/5)'], ['Review', text]], [['Open reviews', 'https://' + req.headers.host + '/admin#reviews']]),
+      rec.name + ' (' + rating + '/5): ' + text);
     return res.status(201).json({ ok: true });
   } catch (e) { console.error(e); return res.status(500).json({ error: 'Server error' }); }
 };

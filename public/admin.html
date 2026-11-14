@@ -250,7 +250,7 @@ label{font-size:12.5px;font-weight:600;color:#4b4b53;display:block;margin-bottom
   <div class="panel"><h3>Upcoming trips (next 7 days) <button class="btn sm" onclick="show('bookings','upcoming')">See all</button></h3><div class="list" id="d-up"></div></div>
   <div class="panel"><h3>Latest new requests <button class="btn sm" onclick="show('bookings','new')">See all</button></h3><div class="list" id="d-new"></div></div>
   <div class="panel"><h3>Quick actions</h3><div class="quick">
-   <button class="btn" onclick="show('rates')">Edit prices</button><button class="btn" onclick="show('media')">Change photos</button><button class="btn" onclick="show('reviews')">Approve reviews</button><button class="btn" onclick="show('services')">Edit services</button><a class="btn" href="/" target="_blank" rel="noopener">Open website</a>
+   <button class="btn" onclick="show('rates')">Edit prices</button><button class="btn" onclick="show('media')">Change photos</button><button class="btn" onclick="show('reviews')">Approve reviews</button><button class="btn" onclick="show('services')">Edit services</button><a class="btn" href="/" target="_blank" rel="noopener">Open website</a><button class="btn" id="tmail" onclick="testEmail()">Send test email</button>
   </div></div>
  </section>
 
@@ -362,6 +362,11 @@ function savePw(){var a=$('np1').value,b=$('np2').value,m=$('pmsg');
   if(!r.ok){m.textContent='Could not save ('+r.status+'). Log in again and retry.';m.style.color='#c0392b';return}
   A=btoa($('u').value+':'+a);sessionStorage.setItem('zha',A);$('np1').value='';$('np2').value='';meter();
   m.textContent='';toast('Password changed. Use it from now on.',true)})}
+
+function testEmail(){var b=$('tmail');b.disabled=true;b.textContent='Sending...';
+ api('/api/admin/test-email',{method:'POST'}).then(function(r){return r.json().then(function(j){
+  if(r.ok)toast('Test email sent to '+(j.to||'your inbox')+'. Check inbox and spam.',true);else toast('Email not sent: '+(j.error||r.status),false)})})
+ .catch(function(){toast('Could not reach the server.',false)}).then(function(){b.disabled=false;b.textContent='Send test email'})}
 
 /* ---------- bookings ---------- */
 var BS=['new','contacted','confirmed','completed','cancelled'];

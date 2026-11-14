@@ -1,4 +1,4 @@
-const { redis, clean, crypto, notify } = require('./_lib');
+const { redis, clean, crypto, notify, sendEmail, emailHtml } = require('./_lib');
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
@@ -22,9 +22,24 @@ module.exports = async (req, res) => {
       (trip === 'return' ? '\nReturn: ' + b.rdate + ' ' + b.rtime : '') + (b.flight ? '\nFlight: ' + b.flight : '') +
       '\n' + b.passengers + ' pax, ' + b.vehicle + '\n' + (b.name || '-') + ' ' + b.phone +
       (b.notes ? '\nNotes: ' + b.notes : '') + '\nhttps://' + req.headers.host + '/admin');
+    await bookingEmail(rec, 'https://' + req.headers.host);
     return res.status(201).json({ ok: true, ref: rec.ref });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error. Please use WhatsApp.' });
   }
 };
+
+// Email to the owner for every new booking (does nothing if email is not set up)
+async function bookingEmail(b, site) {
+  const ph = (b.phone || '').replace(/\D/g, '');
+  const wa = ph ? 'https://wa.me/' + ph + '?text=' + encodeURIComponent('Assalamu Alaikum, ZHA Riders Makkah here. Regarding your booking ' + b.ref + ' (' + b.pickup + ' to ' + b.dropoff + ', ' + b.date + ' ' + b.time + ').') : '';
+  const rows = [['Reference', b.ref], ['Trip', b.pickup + ' → ' + b.dropoff], ['Date & time', b.date + '  ' + b.time],
+    ['Return', b.trip === 'return' ? (b.rdate + '  ' + b.rtime).trim() : 'One way'], ['Flight', b.flight],
+    ['Passengers', b.passengers], ['Vehicle', b.vehicle], ['Name', b.name || '-'], ['Phone', b.phone || '-'], ['Notes', b.notes]];
+  const buttons = [['Open admin panel', site + '/admin#bookings']];
+  if (wa) buttons.unshift(['WhatsApp customer', wa, '#25d366']);
+  const text = rows.filter(r => r[1]).map(r => r[0] + ': ' + r[1]).join('\n') + '\n\n' + site + '/admin';
+  await sendEmail('New booking ' + b.ref + ': ' + b.pickup + ' → ' + b.dropoff + ' (' + b.date + ' ' + b.time + ')',
+    emailHtml('New booking request', 'A customer sent a booking from the website.', rows, buttons), text);
+}
