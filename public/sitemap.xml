@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<url><loc>__SITE__/</loc><xhtml:link rel="alternate" hreflang="en" href="__SITE__/"/><xhtml:link rel="alternate" hreflang="ur" href="__SITE__/ur"/><xhtml:link rel="alternate" hreflang="ar" href="__SITE__/ar"/></url>
+<url><loc>__SITE__/ur</loc><xhtml:link rel="alternate" hreflang="en" href="__SITE__/"/><xhtml:link rel="alternate" hreflang="ur" href="__SITE__/ur"/><xhtml:link rel="alternate" hreflang="ar" href="__SITE__/ar"/></url>
+<url><loc>__SITE__/ar</loc><xhtml:link rel="alternate" hreflang="en" href="__SITE__/"/><xhtml:link rel="alternate" hreflang="ur" href="__SITE__/ur"/><xhtml:link rel="alternate" hreflang="ar" href="__SITE__/ar"/></url>
+</urlset>
