@@ -1,12 +1,16 @@
-const { authed, verifyPassword, setPassword } = require('../_lib');
+const { authed, setStoredAdmin } = require('../_lib');
+// POST /api/admin/password  body: { password }  (caller must already be logged in with the current password)
 module.exports = async (req, res) => {
-  if (!(await authed(req))) return res.status(401).json({ error: 'Unauthorized' });
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!(await authed(req))) return res.status(401).json({ error: 'Unauthorized' });
+  const pw = String((req.body && req.body.password) || '');
+  if (pw.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters.' });
+  if (pw.length > 200) return res.status(400).json({ error: 'Password is too long.' });
   try {
-    const b = req.body || {}, next = String(b.next || '');
-    if (!(await verifyPassword(String(b.current || '')))) return res.status(403).json({ error: 'Current password is wrong.' });
-    if (next.length < 10) return res.status(400).json({ error: 'New password must be at least 10 characters.' });
-    await setPassword(next);
-    res.status(200).json({ ok: true });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
+    await setStoredAdmin(pw);
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error' });
+  }
 };

@@ -1,5 +1,7 @@
 // Shared helpers. Files starting with "_" are not exposed as routes by Vercel.
 const crypto = require('crypto');
+const { promisify } = require('util');
+const pbkdf2 = promisify(crypto.pbkdf2);
 const DB_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const DB_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -17,68 +19,60 @@ async function redis(cmds) {
 }
 const clean = (v, n) => String(v == null ? '' : v).replace(/[<>]/g, '').trim().slice(0, n);
 const STATUS = ['new', 'contacted', 'confirmed', 'completed', 'cancelled'];
-const eq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
-const hashPw = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString('hex');
+const eq = (a, b) => { const x = Buffer.from(a), y = Buffer.from(b); return x.length === y.length && crypto.timingSafeEqual(x, y); };
 
-// Password: a changed password lives (hashed) in the database; until then ADMIN_PASSWORD from Vercel is used.
-async function verifyPassword(pw) {
-  const [rec] = await redis([['GET', 'zha:admin']]);
-  if (rec) { const r = JSON.parse(rec); return eq(hashPw(pw, r.salt), r.hash); }
-  const env = process.env.ADMIN_PASSWORD;
-  return !!env && eq(pw, env);
-}
-async function setPassword(pw) {
+// ---- Admin password ----
+// The password is stored as a salted PBKDF2 hash in Redis (key zha:admin), so it can be
+// changed from the admin page. Until it is changed, ADMIN_PASSWORD (env var) is used.
+const ITER = 210000;
+const MAX_FAILS = 10;      // wrong logins allowed per IP ...
+const LOCK_SECONDS = 900;  // ... inside this window before that IP is locked out
+
+async function hashPassword(pw) {
   const salt = crypto.randomBytes(16).toString('hex');
-  await redis([['SET', 'zha:admin', JSON.stringify({ salt, hash: hashPw(pw, salt) })]]);
+  const hash = (await pbkdf2(pw, salt, ITER, 32, 'sha256')).toString('hex');
+  return { salt, hash, iter: ITER };
 }
+async function checkPassword(pw, rec) {
+  const h = (await pbkdf2(pw, rec.salt, rec.iter || ITER, 32, 'sha256')).toString('hex');
+  return eq(h, rec.hash);
+}
+async function getStoredAdmin() {
+  const [raw] = await redis([['GET', 'zha:admin']]);
+  return raw ? JSON.parse(raw) : null;
+}
+async function setStoredAdmin(pw) {
+  await redis([['SET', 'zha:admin', JSON.stringify(await hashPassword(pw))]]);
+}
+
+// Returns true only for a correct username + password. Wrong attempts are counted per IP.
 async function authed(req) {
   const h = req.headers.authorization || '';
   if (!h.startsWith('Basic ')) return false;
-  const s = Buffer.from(h.slice(6), 'base64').toString(), i = s.indexOf(':');
-  if (i < 1) return false;
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
-  const key = 'zha:rla:' + ip;
-  const [fails] = await redis([['GET', key]]);
-  if (Number(fails) >= 20) return false; // too many wrong attempts, wait 15 minutes
-  const ok = eq(s.slice(0, i), process.env.ADMIN_USER || 'admin') && await verifyPassword(s.slice(i + 1));
-  if (!ok) await redis([['INCR', key], ['EXPIRE', key, 900]]);
-  return ok;
+  const failKey = 'zha:adminfail:' + ip;
+  const [fails] = await redis([['GET', failKey]]);
+  if (Number(fails) >= MAX_FAILS) return false;
+
+  const s = Buffer.from(h.slice(6), 'base64').toString(), i = s.indexOf(':');
+  const user = i > 0 ? s.slice(0, i) : '', pass = i > 0 ? s.slice(i + 1) : '';
+  const adminUser = process.env.ADMIN_USER || 'admin';
+
+  let ok = false;
+  if (user && eq(user, adminUser) && pass) {
+    const stored = await getStoredAdmin();
+    if (stored) ok = await checkPassword(pass, stored);
+    else if (process.env.ADMIN_PASSWORD) ok = eq(pass, process.env.ADMIN_PASSWORD);
+  }
+  if (!ok) {
+    await redis([['INCR', failKey], ['EXPIRE', failKey, LOCK_SECONDS, 'NX']]);
+    return false;
+  }
+  if (fails) await redis([['DEL', failKey]]);
+  return true;
 }
 
-// ----- website content settings (SEO, services, packages, rates) -----
-async function getConfig() {
-  const [raw] = await redis([['GET', 'zha:config']]);
-  return raw ? JSON.parse(raw) : {};
-}
-const LANGS = ['en', 'ur', 'ar'];
-const ml = (o, n) => { o = o || {}; const r = {}; LANGS.forEach(l => { r[l] = clean(o[l], n); }); return r; };
-const price = v => { if (v === '' || v == null) return null; const n = Number(v); return isFinite(n) && n >= 0 && n <= 99999 ? Math.round(n) : null; };
-const slug = () => 'x' + crypto.randomBytes(4).toString('hex');
-function sanitize(section, data) {
-  if (section === 'seo') {
-    const r = {}; LANGS.forEach(l => { const s = (data || {})[l] || {}; r[l] = { title: clean(s.title, 120), description: clean(s.description, 320) }; }); return r;
-  }
-  if (section === 'services' || section === 'packages') {
-    if (!Array.isArray(data)) throw new Error('bad data');
-    return data.slice(0, 20).map(x => {
-      const o = { id: /^[\w-]{1,30}$/.test(x.id || '') ? x.id : slug(), icon: clean(x.icon, 8), t: ml(x.t, 80), d: ml(x.d, 220) };
-      if (section === 'packages') { const p = price(x.price); o.price = p == null ? '' : p; o.f = (Array.isArray(x.f) ? x.f : []).slice(0, 8).map(s => clean(s, 80)).filter(Boolean); }
-      return o;
-    }).filter(o => o.t.en);
-  }
-  if (section === 'rates') {
-    const rows = (data && Array.isArray(data.rows)) ? data.rows : [];
-    return { rows: rows.slice(0, 40).map(r => ({ n: clean(r.n, 80), p: [0, 1, 2, 3].map(i => price((r.p || [])[i])) })).filter(r => r.n) };
-  }
-  throw new Error('bad section');
-}
-async function saveSection(section, data) {
-  const clean_ = sanitize(section, data), cfg = await getConfig();
-  cfg[section] = clean_;
-  await redis([['SET', 'zha:config', JSON.stringify(cfg)]]);
-  return clean_;
-}
-
+module.exports = { redis, clean, STATUS, authed, crypto, setStoredAdmin };
 // Telegram alert (optional). Needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID env vars.
 async function notify(text) {
   const t = process.env.TELEGRAM_BOT_TOKEN, c = process.env.TELEGRAM_CHAT_ID;
@@ -89,4 +83,4 @@ async function notify(text) {
       signal: AbortSignal.timeout(4000) });
   } catch (e) { console.error('Telegram alert failed'); }
 }
-module.exports = { redis, clean, STATUS, authed, crypto, notify, getConfig, saveSection, verifyPassword, setPassword };
+module.exports.notify = notify;

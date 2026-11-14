@@ -1,6 +1,4 @@
 var T={
-"Call":["کال","اتصال"],"Book Now":["ابھی بُک کریں","احجز الآن"],"WhatsApp":["واٹس ایپ","واتساب"],"Send on WhatsApp":["واٹس ایپ پر بھیجیں","أرسل عبر واتساب"],
-"Server unavailable. Please send your request on WhatsApp.":["سرور دستیاب نہیں۔ براہ کرم اپنی درخواست واٹس ایپ پر بھیجیں۔","الخادم غير متاح. يرجى إرسال طلبك عبر واتساب."],
 "Rates":["ریٹس","الأسعار"],"Transport Rates":["ٹرانسپورٹ ریٹس","أسعار النقل"],"Clear Prices for Every Route":["ہر راستے کے لیے واضح قیمتیں","أسعار واضحة لكل مسار"],
 "Rates in Saudi Riyal (SAR) per trip":["ریٹس سعودی ریال (SAR) میں فی سفر","الأسعار بالريال السعودي (SAR) للرحلة"],
 "Tap a price to start your booking. Private rides. Please confirm on WhatsApp before travel.":["بکنگ شروع کرنے کے لیے قیمت پر ٹیپ کریں۔ پرائیویٹ سواری۔ سفر سے پہلے واٹس ایپ پر تصدیق کر لیں۔","اضغط على السعر لبدء الحجز. رحلات خاصة. يرجى التأكيد عبر واتساب قبل السفر."],
@@ -72,7 +70,6 @@ var T={
 var META={en:["Makkah Taxi & Umrah Transfers | Jeddah Airport to Makkah | ZHA Riders","Private taxi and transfers in Makkah, Madinah, Jeddah and Taif. Jeddah Airport to Makkah, Makkah to Madinah and Ziyarat tours. Get a quote on WhatsApp."],
 ur:["مکہ ٹیکسی اور عمرہ ٹرانسفر | جدہ ایئرپورٹ سے مکہ | ZHA Riders","مکہ، مدینہ، جدہ اور طائف میں پرائیویٹ ٹیکسی اور ٹرانسفر۔ جدہ ایئرپورٹ سے مکہ، مکہ سے مدینہ اور زیارات۔ واٹس ایپ پر قیمت معلوم کریں۔"],
 ar:["توصيل وتاكسي مكة والعمرة | من مطار جدة إلى مكة | ZHA Riders","توصيل خاص في مكة والمدينة وجدة والطائف. من مطار جدة إلى مكة ومن مكة إلى المدينة وجولات الزيارات. اطلب عرض سعر عبر واتساب."]};
-try{if(window.__CFG&&__CFG.seo)["en","ur","ar"].forEach(function(l){var s=__CFG.seo[l];if(s&&s.title)META[l][0]=s.title;if(s&&s.description)META[l][1]=s.description})}catch(e){}
 var LANG="en",_o=new WeakMap();
 function t(k){var r=T[k];return LANG==="en"||!r?k:r[LANG==="ur"?0:1]}
 function norm(s){return s.replace(/\s+/g," ").trim().replace(/\s*→$/,"")}
@@ -80,11 +77,10 @@ function walk(n){
  if(n.nodeType===3){var o=_o.get(n);if(o===undefined){o=n.nodeValue;_o.set(n,o)}
   var r=T[norm(o)];n.nodeValue=(LANG!=="en"&&r)?r[LANG==="ur"?0:1]:o}
  else if(n.nodeType===1&&n.tagName!=="SCRIPT"&&n.tagName!=="STYLE"){
-  if(n.dataset&&n.dataset.ml){try{var ml=JSON.parse(n.dataset.ml);n.textContent=(LANG!=="en"&&ml[LANG])||ml.en||""}catch(e){}return}
   var p=n.getAttribute("placeholder");
   if(p!==null){if(n._ph===undefined)n._ph=p;var q=T[n._ph];n.setAttribute("placeholder",(LANG!=="en"&&q)?q[LANG==="ur"?0:1]:n._ph)}
   for(var c=n.firstChild;c;c=c.nextSibling)walk(c)}}
-var _can=document.querySelector("link[rel=canonical]"),_base=_can?_can.href.replace(/\/(ur|ar)?\/?$/,""):"";
+var _can=document.querySelector("link[rel=canonical]"),_base=_can?_can.href.replace(/\/$/,""):"";
 function setLang(l,keepUrl){
  LANG=l;var d=document.documentElement;d.lang=l;d.dir=l==="en"?"ltr":"rtl";document.body.className=l==="en"?"":l;
  walk(document.body);document.title=META[l][0];
